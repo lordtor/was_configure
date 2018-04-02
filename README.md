@@ -1,5 +1,7 @@
-# was_configureRole Name: was_configure
+# was_configure
 
+Role Name: was_configure
+=========
 
 **was_configure** - роль взаимодействия с IBM WebSphere Application Serve.  Ключевой особенностью роли является автогенерация скриптов с необходимыми действиями для WAS по шаблонам.
 
@@ -34,6 +36,8 @@ Dependencies
 ---------
 **[Ansible modules]**
 
+>  git@github.com:lordtor/wsadmin.git
+ 
 -  win_wsadmin.ps1 (Ansible lib модуль упрощенной работы с wsadmin [windows])
 -  wsadmin.py	(Ansible lib модуль упрощенной работы с wsadmin [Nix*])
   

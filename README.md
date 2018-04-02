@@ -1,5 +1,5 @@
 # was_configureRole Name: was_configure
-=========
+
 
 **was_configure** - роль взаимодействия с IBM WebSphere Application Serve.  Ключевой особенностью роли является автогенерация скриптов с необходимыми действиями для WAS по шаблонам.
 
@@ -252,4 +252,4 @@ some_actions - имя шаблона без разрешения
 Author Information
 ---------
 Румянцев Юрий Николаевич
-[SBT-Rumyantsev-YUN@mail.ca.sbrf.ru](mailto:"SBT-Rumyantsev-YUN@mail.ca.sbrf.ru")
+[rumyanec@gmail.com](mailto:"rumyanec@gmail.com")

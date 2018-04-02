@@ -1,0 +1,5 @@
+    print('Run step DELETE_APP')
+    print('Try delete app: %s' % was_app['app_name'])
+    deleteApplicationByNameIfExists(was_app['app_name'])
+    saveAndSyncAndPrintResult()
+    print('End step DELETE_APP')

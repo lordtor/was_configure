@@ -1,0 +1,11 @@
+started = []
+for was_app in was_applications:
+    validateApp(was_temp_dir, was_app)
+    print ('Run step START ALL SERVERS')
+    if was_app['was_type'] == 'CLUSTER':
+        for cluster in was_app['clu_name']:
+            if cluster not in started:
+                startAllServersInCluster(cluster)
+                started.append(cluster)
+    print ('End step  START ALL SERVERS in cluster: %s' % was_app['clu_name'])
+print(started)

@@ -1,0 +1,22 @@
+---
+- name: Рендер сгенерированного скрипта
+  win_template:
+    src: "files/{{was_script}}.j2"
+    dest: "{{ was_temp_dir }}/{{was_script}}.py"
+
+- name: DEBUG win_template
+  block:
+    - name: DEBUG fetch
+      fetch:
+        src: "{{ was_temp_dir }}/{{was_script}}.py"
+        dest: "{{ playbook_dir }}/files/{{was_script}}.py"
+        flat: yes
+        fail_on_missing: no
+        validate_checksum: no
+    - name: DEBUG lookup
+      debug:
+        msg: "{{ lookup('file', '{{ playbook_dir }}/files/{{was_script}}.py').split('\n')}}"
+      delegate_to: localhost
+  when:
+    - log_level >= 3
+

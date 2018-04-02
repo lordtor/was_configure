@@ -1,0 +1,59 @@
+    # TODO: start_cluster for clusters only  need fix one clusters
+    print ('Run step START CLUSTER')
+    if was_app['was_type'] == 'CLUSTER':
+        for cluster in was_app['clu_name']:
+            cell,cellName, servers=getClusterServersCell(cluster)
+            count_servers = len(servers)
+            print('Found servers: %s' % servers)
+            print('Found count_servers: %s' % count_servers)
+            started_servers = 0
+            timeoutSecs = 0
+            startCluster(cluster)
+            for serverID in servers:
+                serverName, nodeName, aServer=getClusterServerObj(serverID, cellName)
+                print('Work on aServer: %s' % aServer)
+                if (aServer != ""):
+                    aState=AdminControl.getAttribute(aServer, 'state')
+                    pid   = AdminControl.getAttribute(aServer, 'pid')
+                    print "Server", serverName, "is in a", aState, "state"
+                    print "Server pid is ", pid
+                    started_servers = started_servers + 1
+                else:
+                    aState="STOPPED"
+                    print "Server", serverName, "is in a", aState, "state"
+            if count_servers != started_servers:
+                if timeoutSecs < 240:  # up to 4 minutes, sleep 30 seconds each cycle.
+                    sleepTimeSecs = 30
+                    numSleeps = 1 + timeoutSecs / sleepTimeSecs
+                else:   # over 4 minutes, sleep 8 times
+                    numSleeps = 8
+                    sleepTimeSecs = timeoutSecs / numSleeps
+                print("sleepTimeSecs=%d numSleeps=%d" % ( sleepTimeSecs, numSleeps ))
+                while numSleeps > 0:
+                    started_servers = 0
+                    # Test all servers started state
+                    for serverID in servers:
+                        serverName, nodeName, aServer=getClusterServerObj(serverID, cellName)
+                        if (aServer != ""):
+                            aState=AdminControl.getAttribute(aServer, 'state')
+                            pid   = AdminControl.getAttribute(aServer, 'pid')
+                            print "Server", serverName, "is in a", aState, "state"
+                            print "Server pid is ", pid
+                            started_servers = started_servers + 1
+                        else:
+                            aState="STOPPED"
+                    if count_servers == started_servers:
+                        print('All servers in started state')
+                        result = 0
+                        break
+                    if count_servers != started_servers:
+                        result = 1
+                    # Sleep
+                    print("Sleeping %s seconds. numSleeps=%d" % ( sleepTimeSecs, numSleeps ))
+                    time.sleep(sleepTimeSecs)
+                    numSleeps = numSleeps - 1
+                if result == 1:
+                    sys.exit("started not all servers")
+            else:
+                print('All servers in started state')
+    print ('End step  START CLUSTER: %s' % was_app['clu_name'])

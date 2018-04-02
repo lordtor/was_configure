@@ -1,0 +1,20 @@
+---
+- name: Будет выполнено копирование следующих приложений
+  debug:
+    msg: "{{ was_temp_dir }}/{{ item.file_name }}"
+  with_items:
+   - "{{ was_applications }}"
+  when:
+    - "'file_name' in item"
+    - copy_file == true
+    - log_level >= 2
+- name: Копирование приложений
+  win_copy:
+    src: "{{ item.path }}"
+    dest: "{{ was_temp_dir }}/{{ item.file_name }}"
+    changed: true
+  with_items:
+   - "{{ was_applications }}"
+  when:
+    - "'file_name' in item"
+    - copy_file == true

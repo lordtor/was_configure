@@ -1,0 +1,27 @@
+---
+- name: Генерация стартовой секции скрипта
+  local_action:
+   module: blockinfile
+   dest: "files/{{was_script}}.j2"
+   create: yes
+   content: "{{lookup('file', 'templates/start.j2')}}"
+   marker: "# {mark} ANSIBLE AUTO MANAGED CODE BLOCK  start}}"
+
+
+- name: Генерация зависимых секций скрипта
+  local_action:
+   module: blockinfile
+   dest: "files/{{was_script}}.j2"
+   create: yes
+   content: "{{lookup('file', 'templates/{{ item.script }}.j2')}}"
+   marker: "# {mark} ANSIBLE AUTO MANAGED CODE BLOCK  {{ item.script }}"
+  with_items:
+   - "{{ steps }}"
+  when: "'script'in item"
+
+- name: DEBUG was_applications
+  debug:
+    msg: "{{ lookup('file', 'files/{{was_script}}.j2').split('\n')}}"
+  when:
+    - log_level >= 3
+

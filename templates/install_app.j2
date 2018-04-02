@@ -1,0 +1,16 @@
+    print('Run step INSTALL')
+    options = generateInstallationOptions(was_app)
+    if was_app['was_type'] == 'CLUSTER':
+        print('Install app %s on %s' % (was_app['app_name'], was_app['clu_name']))
+        installApplication(was_app['path'], was_app['server_name'], was_app['clu_name'], [options])
+    elif was_app['was_type'] == 'DMGR' or was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            print('Install app %s on %s' % (was_app['app_name'], server))
+            sname, nname, cname = getServerParameter(server)
+            server_for_work = [{'nodename': nname, 'servername': server}]
+            installApplication(was_app['path'], server_for_work, was_app['clu_name'], [options])
+    print("was_app['parameters']['setClassloaderToParentLast'] %s" % was_app['parameters']['setClassloaderToParentLast'])
+    if was_app['parameters']['setClassloaderToParentLast'] == 1:
+        setClassloaderToParentLast(was_app.get('new_app_name', was_app['app_name']))
+    saveAndSyncAndPrintResult()
+    print('End step INSTALL')

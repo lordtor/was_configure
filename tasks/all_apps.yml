@@ -1,0 +1,58 @@
+---
+- name: Инициализация массива приложений
+  set_fact:
+     apps: []
+
+- name: Поиск всех доступных приложений
+  local_action:
+   module: find
+   paths: "{{ work_dir }}"
+   patterns: '*.ear,*.war'
+   recurse: "yes"
+   file_type: "file"
+  register: find_result
+  when: copy_file == true
+
+- name: DEBUG find_result
+  debug:
+    msg: "{{ item }}"
+  with_items: "{{ find_result.files }}"
+  when:
+    - copy_file == true
+    - log_level >= 2
+
+- name: Отбор и сопостовление доступных приложений по маске
+  set_fact:
+     apps: "{{ apps + [{'file_name': item.1.path |basename, 'mask': item.0.mask, 'path':item.1.path}]  }}"
+  with_nested:
+   - "{{ was_applications }}"
+   - "{{ find_result.files }}"
+  when:
+    - copy_file == true
+    - item.0.mask in item.1.path
+
+- name: DEBUG apps
+  debug:
+    msg: "{{ apps }}"
+  when:
+    - copy_file == true
+    - log_level >= 1
+
+- name: Создание временной конфигурации приложений
+  set_fact:
+    tmp_was_deploy: "{{ item | combine(apps | selectattr('mask','equalto',item.mask) | first) }}"
+  with_items: "{{ was_applications }}"
+  register: tmp_was_deploys
+  when: copy_file == true
+
+- name: Обновляем конфигурацию приложений
+  set_fact:
+    was_applications: "{{ tmp_was_deploys.results | map(attribute='ansible_facts.tmp_was_deploy') | list }}"
+  when: copy_file == true
+
+- name: DEBUG was_applications
+  debug:
+    msg: "{{ was_applications }}"
+  when:
+    - copy_file == true
+    - log_level >= 1

@@ -1,0 +1,29 @@
+---
+- name: Поиск устаревших файлов вылолняется помаске
+  debug:
+    msg: "'*.py', '*.log', '*.properties', '*.xml', '*.ear'"
+  when:
+    - log_level >= 3
+- name: Поиск старых файлов
+  find:
+    paths: "{{ was_temp_dir }}"
+    patterns: ['*.py', '*.log', '*.properties', '*.xml', '*.ear']
+    recurse: "yes"
+    file_type: "file"
+  register: find_result
+
+- name: Следующие файлы будут удалены
+  debug:
+    msg:  "{{item.path}}"
+  with_items:
+    - "{{ find_result.files}}"
+  when:
+    - log_level >= 2
+
+- name: Удаление старых файлов
+  file:
+    state: absent
+    path: "{{item.path}}"
+  with_items:
+    - "{{ find_result.files}}"
+  ignore_errors: True

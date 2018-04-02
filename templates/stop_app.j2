@@ -1,0 +1,23 @@
+    print('Run step STOP APP')
+    if was_app['was_type'] == 'CLUSTER':
+        for cluster in was_app['clu_name']:
+            status = getApplicationStatusOnCluster(cluster, was_app['app_name'])
+            if status == 'false':
+                print('Stop app %s on %s' % (was_app['app_name'], cluster))
+                stopApplicationOnCluster(was_app['app_name'], cluster)
+                print('App %s on %s  stoped' % (was_app['app_name'], cluster))
+            elif status == 'true':
+                print('App %s on %s  already stoped' % (was_app['app_name'], cluster))
+            else:
+                print status
+    elif was_app['was_type'] == 'DMGR' or was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            print(getServerParameter(server))
+            sname, nname, cname = getServerParameter(server)
+            if getApplicationStatusOnServer(sname, was_app['app_name']) == 'true':
+                print('Stop app %s on server %s on node %s' % (was_app['app_name'], sname, nname))
+                stopApplicationOnServer(was_app['app_name'],nname,sname)
+                print('App %s on %s  stoped' % (was_app['app_name'], server))
+            else:
+                print('App %s on %s  already stoped' % (was_app['app_name'], server))
+    print('End step STOP APP')

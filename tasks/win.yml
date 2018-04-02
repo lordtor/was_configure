@@ -1,0 +1,23 @@
+---
+- name: Создаем временный каталог
+  include_tasks: win_create_tmp_dir.yml
+
+- name: Подключаем удаление старых скриптов
+  include_tasks: win_clean.yml
+
+- name: Подключаем копирование библиотек
+  include_tasks: win_copy_lib.yml
+
+- name: Сбор данных о приложениях
+  include_tasks: all_apps.yml
+  when: copy_file == true
+
+- name: Подключаем копирование приложений
+  include_tasks: win_copy_apps.yml
+  when: copy_file == true
+
+- name: Подключаем рендер скрипта
+  include_tasks: win_render.yml
+
+- name: Запускаем wsadmin
+  include_tasks: win_run_was.yml

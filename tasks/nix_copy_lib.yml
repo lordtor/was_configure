@@ -1,0 +1,5 @@
+---
+- name: Копируем библиотеку OABS_wsadminlib.py
+  copy:
+   src: "files/OABS_wsadminlib.py"
+   dest: "{{ was_temp_dir }}/OABS_wsadminlib.py"

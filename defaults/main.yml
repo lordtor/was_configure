@@ -1,0 +1,41 @@
+---
+# Уровень логирования 0 - минимум 3 - максимум
+log_level: 1
+# WAS_HOME где стоит IBM WAS
+WAS_HOME: "{{ was_home }}"
+# Временная рабочая директория
+was_temp_dir: ''
+# Хост для подключений
+wsadminHost: ""
+# Порт для подключения
+wsadminPort: ""
+# Тип подключения
+wsadminConttype: SOAP
+# Язык скриптов для выполнения
+wsadminLang: jython
+# javaoption -Xmx
+wsadminXmx: ""
+# javaoption -Xms
+wsadminXms:  ""
+# javaoption -Dcom.ibm.SOAP.requestTimeout
+wsadminTimeOut: ""
+# Формирование параметров для модулей
+javaXms: "{% if wsadminXms != '' %} -javaoption -Xms{{wsadminXms}}m  {% else %}{{wsadminXms}}{% endif %}"
+javaXmx: "{% if wsadminXmx != '' %} -javaoption -Xmx{{wsadminXmx}}m  {% else %}{{wsadminXmx}}{% endif %}"
+javaTimeOut: "{% if wsadminTimeOut != '' %} -javaoption -Dcom.ibm.SOAP.requestTimeout={{wsadminTimeOut}}  {% else %}{{wsadminTimeOut}}{% endif %}"
+wsadminParams: "{{ javaXms }} {{ javaXmx }} {{javaTimeOut }}"
+# Если имя профайла не задано будет использоваться wsadmin из корневой директории
+wsadminProfileName: "{{ profile_name|default('') }}"
+# Формирование пути до wsadmin
+wsadminProfileHome: "{% if wsadminProfileName != '' %}{{ WAS_HOME }}/profiles/{{ wsadminProfileName }}{% else %}{{ WAS_HOME }}{% endif %}"
+# Формирование пути до wsadmin
+wsadminHome: "{{ wsadminProfileHome }}/bin"
+# Параметры запуска скрипта при использовании генератора шаблонов не используются
+wsadminScriptParam: ""
+# Разрешение на принятие сертификата WAS при использовании wsadmin из папки профайла и без указания хоста не используется
+wsadminAcceptCert: false
+# Выполнение произвольной команды ключ -с не указывается
+wsadminCommand: ""
+# Шаблон для генератора по умолчанию
+steps:
+  - { script: "debug" }

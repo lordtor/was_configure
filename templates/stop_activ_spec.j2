@@ -1,0 +1,22 @@
+    print('Run step STOP ActivationSpec')
+    if was_app['was_type'] == 'CLUSTER':
+        for cluster in was_app['clu_name']:
+            servers = getServersFomCluster(cluster)
+            for server in servers:
+                try:
+                    print 'Stop ActivationSpec for app ', was_app['app_name']
+                    print was_app['parameters']['notCriticalAS']
+                    stopStartActivationSpecForApp(was_app['app_name'], 'stop', server, was_app['parameters']['notCriticalAS'])
+                except Exception, e:
+                    print 'Error or ActivationSpec not found fo app ', was_app['app_name']
+                    print was_app['parameters']['notCriticalAS']
+                    print e
+    elif was_app['was_type'] == 'DMGR' or was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            try:
+                print was_app['parameters']['notCriticalAS']
+                stopStartActivationSpecForApp(was_app['app_name'], 'stop', server,  was_app['parameters']['notCriticalAS'])
+            except:
+                print('Not found runnig app %s on server %s or app not have ActivationSpec ' % (was_app['app_name'], server))
+    print('End step STOP ActivationSpec')
+

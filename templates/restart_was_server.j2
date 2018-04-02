@@ -1,0 +1,16 @@
+restarted = []
+# TODO: restart_was_server for st only
+for was_app in was_applications:
+    validateApp(was_temp_dir, was_app)
+    print ('Run step RESTART')
+    max_sleep = 120
+    if was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            if server not in restarted:
+                print('Restart server: %s' % server)
+                s_parametr = getServerParameter(server)
+                restartServer( s_parametr[1], s_parametr[0], max_sleep )
+                restarted.append(server)
+    print ('End step RESTART')
+print(restarted)
+

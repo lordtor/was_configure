@@ -1,0 +1,5 @@
+    print('Run step UPDATE')
+    print('Update app %s' % (was_app['app_name']))
+    updateApplicationByNameIfExists(was_app['app_name'], was_app['path'])
+    saveAndSyncAndPrintResult()
+    print('End step UPDATE')

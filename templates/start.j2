@@ -1,0 +1,90 @@
+import os
+execfile (os.path.join(r'{{was_temp_dir}}', "OABS_wsadminlib.py"))
+was_applications = {{was_applications}}
+was_temp_dir = r'{{was_temp_dir}}'
+
+
+def validateApp(was_temp_dir, was_app):
+    # Cluster or Server
+
+    try:
+        was_app['clu_name']
+    except KeyError:
+        was_app['clu_name'] = []
+    try:
+        was_app['server_name']
+    except KeyError:
+        was_app['server_name'] = []
+    try:
+        was_app['was_type']
+    except KeyError:
+        was_app['was_type'] = ''
+        if len(was_app['server_name']) == 0 and len(was_app['clu_name']) == 0:
+            print('Work this one server (not use DMGR)')
+            was_app['server_name'] = [getServerName()]
+            was_app.update({'was_type': 'ST'})
+        elif len(was_app['server_name']) != 0 and len(was_app['clu_name']) == 0:
+            print('Work this  servers (use DMGR)')
+            was_app.update({'was_type': 'DMGR'})
+        elif len(was_app['server_name']) == 0 and len(was_app['clu_name']) != 0:
+            print('Work this  clusters (use DMGR)')
+            was_app.update({'was_type': 'CLUSTER'})
+    # app
+    try:
+        was_app['file_name']
+    except KeyError:
+        was_app['file_name'] = 'none'
+    was_app['path'] = os.path.join(was_temp_dir, was_app['file_name'])
+    if not was_app['app_name'] or was_app['app_name'] == '':
+        was_app['app_name'] = getApplicationName(was_app['file_name'])
+        if was_app['app_name'] and  was_app['path'] != 'none':
+            print('Use app name: %s for file: %s' % (was_app['app_name'], was_app['path']))
+        else:
+            print('ERROR: Not found path to ear file')
+            sys.exit(1)
+    # parameters
+    try:
+        was_app['parameters']
+    except KeyError:
+        was_app['parameters'] = {}
+    try:
+        was_app['parameters']['notCriticalAS']
+    except KeyError:
+        was_app['parameters'].update({'notCriticalAS' : 'None'})
+    try:
+        was_app['parameters']['contextroot']
+    except KeyError:
+        was_app['parameters'].update({'contextroot' : 'None'})
+    try:
+        was_app['parameters']['usedefaultbindings']
+    except KeyError:
+        was_app['parameters'].update({'usedefaultbindings' : 'None'})
+    try:
+        was_app['parameters']['setClassloaderToParentLast']
+    except KeyError:
+        was_app['parameters'].update({'setClassloaderToParentLast' : 'False'})
+    return
+
+
+
+
+def generateInstallationOptions(was_app):
+    if  was_app['parameters']['contextroot'] != 'None':
+        contextroot = " -CtxRootForWebMod [['.*' '.*' '" + was_app['parameters']['contextroot']+ "']]"
+    else:
+        contextroot = ""
+    if  was_app['parameters']['usedefaultbindings'] == 'True':
+        usedefaultbinding = " -usedefaultbindings"
+    else:
+        usedefaultbinding = ''
+    appname = was_app.get('new_app_name', was_app.get('app_name', ""))
+    if appname:
+        appname = "-appname '" + appname +"'"
+    ops = appname + contextroot + usedefaultbinding
+    return ops
+for was_app in was_applications:
+# Validate incomming parameters (was_applications[was_app])
+    validateApp(was_temp_dir, was_app)
+
+
+

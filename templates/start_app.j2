@@ -1,0 +1,23 @@
+    print('Run step START APP')
+    app_name = was_app.get('new_app_name', was_app['app_name'])
+    if was_app['was_type'] == 'CLUSTER':
+        for cluster in was_app['clu_name']:
+            status = getApplicationStatusOnCluster(cluster, app_name)
+            if status != 'false':
+                print('Start app %s on %s' % (app_name, cluster))
+                startApplicationOnCluster(app_name, cluster)
+                print('App %s on %s  started' % (app_name, cluster))
+            elif status != 'true' :
+                print('App %s on %s  started' % (app_name, cluster))
+            else:
+                print status
+    elif was_app['was_type'] == 'DMGR' or was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            sname, nname, cname = getServerParameter(server)
+            if getApplicationStatusOnServer(server, app_name) == 'false':
+                print('Start app %s on %s' % (app_name, server))
+                startApplicationOnServer(app_name,nname,sname)
+                print('App %s on %s  started' % (app_name, server))
+            else:
+                print('App %s on %s  started' % (app_name, server))
+    print('End step START APP')

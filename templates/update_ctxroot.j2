@@ -1,0 +1,12 @@
+    try:
+        if was_app['parameters'].has_key('contextRoot'):
+            print was_app['parameters']['contextRoot']
+            print ('Run update context root')
+            AdminApp.edit(was_app['app_name'], ['-CtxRootForWebMod', [[".*",".*",was_app['parameters']['contextRoot']]]])
+            AdminConfig.save()
+            print ('Finish update context root')
+        else:
+            print ('Context root no found for app %s' % was_app['app_name'])
+    except ScriptingException, e:
+        print(e)
+

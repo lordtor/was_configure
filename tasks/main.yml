@@ -1,0 +1,37 @@
+---
+- name: Chech in configuration
+  block:
+    - assert:
+        that:
+          - WAS_HOME != ""
+          - was_temp_dir != ""
+          - ansible_os_family != ""
+          - ansible_date_time != ""
+          - was_applications != ""
+        msg:
+          - "For work need set: "
+          - "WAS_HOME -  Install root IBM WAS"
+          - "was_temp_dir - Temp directory for wok "
+          - "ansible_os_family - OS type Windows or Nix"
+          - "ansible_date_time - Array Date/time format %Y-%m-%d, %H:%M:%S'"
+          - " was_applications - Array apps"
+          - "Please chech yor configuration!!!!"
+    - assert:
+        that: wsadminHost == "" and wsadminPort == ""
+        msg:
+          - "For work need set "
+          - "wsadminHost and  wsadminPort - FQDM(or IP) host and SOAP port"
+          - "or profile_name - WAS profile name Dmgr01 or AppSrv01 ..."
+          - "Please chech yor configuration!!!!"
+      when: (profile_name is undefined) or (profile_name == "")
+
+- name: Подключаем генератор скриптов
+  include_tasks: all_generate.yml
+
+- name: Определяем тип ОС и подключаем необходимый модуль (Windows)
+  include_tasks: win.yml
+  when: ansible_os_family == 'Windows'
+
+- name: Определяем тип ОС и подключаем необходимый модуль (Nix)
+  include_tasks: nix.yml
+  when: ansible_os_family != 'Windows'

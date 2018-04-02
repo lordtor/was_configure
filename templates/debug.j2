@@ -1,0 +1,41 @@
+    if was_app['was_type'] == 'CLUSTER':
+        for cluster in was_app['clu_name']:
+            servers = getServersFomCluster(cluster)
+            for server in servers:
+                try:
+                    print 'Stop ActivationSpec for app ', was_app['app_name']
+                    print was_app['parameters']['notCriticalAS']
+                    getActivationSpecForApp(was_app['app_name'], server, was_app['parameters']['notCriticalAS'])
+                except Exception, e:
+                    print 'Error or ActivationSpec not found fo app ', was_app['app_name']
+                    print was_app['parameters']['notCriticalAS']
+                    print e
+    elif was_app['was_type'] == 'DMGR' or was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            try:
+                print was_app['parameters']['notCriticalAS']
+                getActivationSpecForApp(was_app['app_name'], server,  was_app['parameters']['notCriticalAS'])
+            except:
+                print('Not found runnig app %s on server %s or app not have ActivationSpec ' % (was_app['app_name'], server))
+
+cells = AdminConfig.list('Cell').split()
+print cells
+nodes = AdminConfig.list('Node', cells[0]).split()
+print nodes
+cname = AdminConfig.showAttribute(cells[0], 'name')
+print cname
+nname = AdminConfig.showAttribute(nodes[0], 'name')
+print nname
+servs = AdminControl.queryNames('type=Server,cell=' + cname + ',node=' + nname + ',*').split()
+print servs
+for server in servs:
+    sname = AdminControl.getAttribute(server, 'name')
+    print sname
+    server = AdminConfig.getid('/Server:'+sname+'/')
+    jvm = AdminConfig.list('JavaVirtualMachine', server)
+    print sname + ' initialHeapSize: ' + AdminConfig.showAttribute(jvm, 'initialHeapSize')
+    print sname + ' maximumHeapSize: ' + AdminConfig.showAttribute(jvm, 'maximumHeapSize')
+    ss=AdminControl.completeObjectName('cell='+cname+',node='+nname+',name='+sname+',process='+sname+',type=Server,*')
+    print AdminControl.getAttribute(ss,'serverVersion')
+serverStatus()
+

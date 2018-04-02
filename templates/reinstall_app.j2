@@ -1,0 +1,19 @@
+    print('Run step REINSTALL')
+    options = generateInstallationOptions(was_app)
+    print('Try delete app: %s' % was_app['app_name'])
+    deleteApplicationByNameIfExists(was_app['app_name'])
+    if was_app['was_type'] == 'CLUSTER':
+        print('Install app %s on %s' % (was_app['app_name'], was_app['clu_name']))
+        installApplication(was_app['path'], was_app['server_name'], was_app['clu_name'], [options])
+        saveAndSyncAndPrintResult()
+    elif was_app['was_type'] == 'DMGR' or was_app['was_type'] == 'ST':
+        for server in was_app['server_name']:
+            print('Install app %s on %s' % (was_app['app_name'], server))
+            sname, nname, cname = getServerParameter(server)
+            server_for_work = [{'nodename': nname, 'servername': server}]
+            installApplication(was_app['path'], server_for_work, was_app['clu_name'], [options])
+            saveAndSyncAndPrintResult()
+    if was_app['parameters']['setClassloaderToParentLast'].upper() == 'TRUE':
+        setClassloaderToParentLast(was_app.get('new_app_name', was_app['app_name']))
+        saveAndSyncAndPrintResult()
+    print('End step REINSTALL')

@@ -1,0 +1,177 @@
+---
+- name: Получаем имя хоста обработки
+  set_fact:
+   host_flag: "{{ ansible_host }}"
+
+- name: Устанавливаем флаг начала работы как run
+  set_fact:
+   flag: 'run'
+
+- name: Устанавливаем маску лог файла
+  set_fact:
+    log_mask: "{{ host_flag }}_{{ ansible_date_time.date }}-{{ ansible_date_time.time | regex_replace(':','.') }}_{{was_script}}_{{random_string.msg}}"
+
+- name: DEBUG log_mask
+  debug:
+    msg: "{{ log_mask }}"
+  when:
+    - log_level >= 1
+
+- name: DEBUG string for run script
+  debug:
+    msg:
+      - "Used next vars for run wsadmin:"
+      - "Wsadmin_script: {{ wsadminHome }}"
+      - "Host: {{ wsadminHost }}"
+      - "Port: {{ wsadminPort }}"
+      - "RequestTimeout: {{ javaTimeOut }}"
+      - "Xms: {{ javaXms }}"
+      - "Xmx: {{ javaXmx }}"
+      - "username: {{ was_username }}"
+      - "script: {{ was_temp_dir }}/{{was_script}}.py"
+  when:
+    - log_level >= 3
+
+- name: Запускаем wsadmin и пытаемся принять сертификат хоста (ОС Linux)
+  wsadmin:
+  args:
+    accept_cert: "{{ wsadminAcceptCert }}"
+    wasdir: "{{ wsadminHome }}"
+    wasport: "{{ wsadminPort }}"
+    washost: "{{ wsadminHost }}"
+    username: "{{ was_username }}"
+    password: "{{ was_password }}"
+    was_command: 'sys.exit'
+  register: cert_true
+  ignore_errors: True
+  when:
+    - wsadminAcceptCert
+
+- name: Запускаем wsadmin и передаем на выполнение сгенерированный скрипт (ОС Linux)
+  wsadmin:
+  args:
+    wasdir: "{{ wsadminHome }}"
+    washost: "{{ wsadminHost }}"
+    wasport: "{{ wsadminPort }}"
+    conntype: "{{ wsadminConttype }}"
+    lang: "{{ wsadminLang }}"
+    was_params: "{{ wsadminParams }}"
+    tracefile: "{{ was_temp_dir }}/{{log_mask }}_trace.log"
+    username: "{{ was_username }}"
+    password: "{{ was_password }}"
+    script: "{{ was_temp_dir }}/{{was_script}}.py"
+    script_params: "{{ wsadminScriptParam }} 1> {{ was_temp_dir }}/{{log_mask }}_stdout.log 2> {{ was_temp_dir }}/{{ log_mask }}_stderr.log"
+    was_command: "{{ wsadminCommand }}"
+    accept_cert: false
+  register: wsadmin_nix
+  ignore_errors: True
+
+- name: DEBUG wsadmin_nix
+  debug:
+    msg:
+      - wsadmin_nix.stdout_lines
+      - wsadmin_nix.stderr_lines
+  when:
+    - log_level >= 2
+
+- name: Собираем лог файлы stdout
+  fetch:
+    src: "{{ was_temp_dir }}/{{ log_mask }}_stdout.log"
+    dest: "{{ playbook_dir }}/files/{{ log_mask }}_stdout.log"
+    flat: yes
+    fail_on_missing: no
+    validate_checksum: no
+
+- name: Забираем wsadmin.traceout
+  fetch:
+    src: "{{ was_temp_dir }}/{{log_mask }}_trace.logt"
+    dest: "{{ playbook_dir }}/files/{{ log_mask }}_wsadmin.traceout.log"
+    flat: yes
+    fail_on_missing: no
+    validate_checksum: no
+
+- name: Собираем лог файлы stderr
+  fetch:
+    src: "{{ was_temp_dir }}/{{ log_mask }}_stderr.log"
+    dest: "{{ playbook_dir }}/files/{{ log_mask }}_stderr.log"
+    flat: yes
+    fail_on_missing: no
+    validate_checksum: no
+
+- name: Упаковываем логи
+  archive:
+    path:
+        - "{{work_dir}}/files/*.log"
+    format: zip
+    dest: "{{work_dir}}/logs.zip"
+  delegate_to: localhost
+
+- name: Проверяем результаты выполнения wsadmin на наличие ошибок
+  block:
+    - debug:
+        msg: "{{ wsadmin_nix }}"
+      when:
+        - log_level >= 2
+
+    - name: Обновляем флаг работы как failed
+      set_fact:
+       flag: 'failed'
+      when: wsadmin_nix|failed
+
+    - name: Исключаем ошибки при перезагрузке одиночного сервера WAS
+      lineinfile:
+        path: "{{ was_temp_dir }}/{{ log_mask }}_stdout.log"
+        state: absent
+        regexp: "Restart server: "
+        line: 'Restart server: '
+      check_mode: yes
+      register: fix_err
+      when: flag == 'failed'
+      #msg=Error opening socket: java.net.ConnectException: Connection refused: connect
+      # Исключаем ошибки при перезагрузке одиночного сервера WAS
+      # Игнорирование ошибки рестарта standelone (template restart)
+      # Если в логе есть  'msg=Error opening socket: java.net.ConnectException' меняем флаг на ignore
+    - name: Флаг имеет работы значение
+      debug:
+        msg: "{{ flag }}"
+      when:
+        - log_level >= 1
+
+    - name: Обновляем флаг работы как ignore если есть исключения
+      set_fact:
+       flag: 'ignore'
+      when: "fix_err|changed"
+    - name: Флаг имеет значение
+      debug:
+        msg: "{{ flag }}"
+      when:
+        - log_level >= 0
+
+    - name: Copy script to email
+      fetch:
+        src: "{{ was_temp_dir }}/{{was_script}}.py"
+        dest: "{{ playbook_dir }}/files/{{was_script}}.py.log"
+        flat: yes
+        fail_on_missing: no
+        validate_checksum: no
+      when: flag == 'failed'
+
+    - name: Упаковываем script
+      archive:
+        path:
+            - "{{work_dir}}/files/*.log"
+        format: zip
+        dest: "{{work_dir}}/logs.zip"
+      delegate_to: localhost
+      when: flag == 'failed'
+
+    - name: Проверяем статус по флагу
+      fail: msg="В процессе работы обнаружены ошибки, проверьте лог файлы."
+      when: flag == 'failed'
+
+- name: Очищаем временные каталоги
+  include_tasks: nix_clean.yml
+- name: Удаляем временный каталог
+  file:
+    path: "{{ was_temp_dir }}"
+    state: absent

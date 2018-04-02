@@ -1,0 +1,43 @@
+---
+- name: Генерируем рандомную строку
+  random_generator:
+    size: 5
+  register: random_string
+  delegate_facts: True
+  delegate_to: localhost
+
+- name: DEBUG random_string
+  debug:
+    msg: "{{ random_string.msg }}"
+  when:
+    - log_level >= 1
+
+- name: Проверка наличия директории (если нет создать)
+  win_file:
+    path: "{{was_temp_dir}}"
+    state: directory
+
+- name: Переопределяем путь
+  set_fact:
+    was_orig_temp_dir: "{{was_temp_dir}}"
+
+- name: DEBUG was_orig_temp_dir
+  debug:
+    msg: "{{ was_orig_temp_dir }}"
+  when:
+    - log_level >= 1
+
+- name: Переопределяем путь
+  set_fact:
+    was_temp_dir: "{{was_temp_dir}}/{{random_string.msg}}"
+
+- name: DEBUG was_temp_dir
+  debug:
+    msg: "{{ was_temp_dir }}"
+  when:
+    - log_level >= 1
+
+- name: "Создаем временную директорию: {{was_temp_dir}}"
+  win_file:
+    path: "{{was_temp_dir}}"
+    state: directory
